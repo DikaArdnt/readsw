@@ -99,7 +99,7 @@ const startSock = async () => {
    hisoka.ev.on("messages.upsert", async ({ messages }) => {
       let message = messages[0]
 
-      if (message.key && message.key.remoteJid === "status@broadcast") {
+      if (message.key && !message.key.fromMe && message.key.remoteJid === "status@broadcast") {
          await hisoka.readMessages([message.key])
          await hisoka.sendMessage(jidNormalizedUser(hisoka.user.id), { text: `Read Story @${message.key.participant.split("@")[0]}`, mentions: [message.key.participant] }, { quoted: message })
       }
