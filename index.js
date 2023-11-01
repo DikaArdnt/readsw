@@ -1,6 +1,6 @@
 import "dotenv/config"
 
-import makeWASocket, { delay, useMultiFileAuthState, fetchLatestWaWebVersion, makeCacheableSignalKeyStore, makeInMemoryStore, jidNormalizedUser, PHONENUMBER_MCC, DisconnectReason } from "@whiskeysockets/baileys";
+import makeWASocket, { delay, useMultiFileAuthState, fetchLatestWaWebVersion, makeInMemoryStore, jidNormalizedUser, PHONENUMBER_MCC, DisconnectReason } from "@whiskeysockets/baileys"
 import pino from "pino"
 import { Boom } from "@hapi/boom"
 import fs from "fs"
@@ -23,10 +23,7 @@ const startSock = async () => {
       version,
       logger,
       printQRInTerminal: !usePairingCode,
-      auth: {
-         creds: state.creds,
-         keys: makeCacheableSignalKeyStore(state.keys, logger)
-      },
+      auth: state,
       browser: ['Chrome (Linux)', '', ''],
       markOnlineOnConnect: false,
       getMessage
@@ -84,6 +81,9 @@ const startSock = async () => {
                console.error("Nedd Multi Device Version, please update and rescan again...")
                fs.rmdirSync("./session")
                break
+            default: 
+               console.log("Aku ra ngerti masalah opo iki")
+               process.exit(1)
          }
       }
 
@@ -100,10 +100,13 @@ const startSock = async () => {
       let message = messages[0]
 
       if (message.key && message.key.remoteJid === "status@broadcast") {
-         await hisoka.sendMessage(jidNormalizedUser(hisoka.user.id), { text: `Read Story @${message.key.participant.split("@")[0]}`, mentions: [message.key.participant] }, { quoted: message })
          await hisoka.readMessages([message.key])
+         await hisoka.sendMessage(jidNormalizedUser(hisoka.user.id), { text: `Read Story @${message.key.participant.split("@")[0]}`, mentions: [message.key.participant] }, { quoted: message })
       }
    })
+
+   process.on("uncaughtException", console.error)
+   process.on("unhandledRejection", console.error)
 }
 
 // opsional
