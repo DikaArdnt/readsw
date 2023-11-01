@@ -1,0 +1,1 @@
+Tinggal `npm install` terus `npm start`
