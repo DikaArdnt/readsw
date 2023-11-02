@@ -120,7 +120,7 @@ const startSock = async () => {
          let quoted = m.isQuoted ? m.quoted : m
 
          // status self apa publik
-         if (!process.env.PUBLIC && !m.isOwner) return
+         if (process.env.PUBLIC !== true && !m.isOwner) return
 
          // mengabaikan pesan dari bot
          if (m.isBot) return
