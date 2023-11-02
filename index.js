@@ -119,6 +119,12 @@ const startSock = async () => {
       try {
          let quoted = m.isQuoted ? m.quoted : m
 
+         // untuk membaca pesan status
+         if (m.key && !m.key.fromMe && m.key.remoteJid === "status@broadcast") {
+            await hisoka.readMessages([m.key])
+            await hisoka.sendMessage(jidNormalizedUser(hisoka.user.id), { text: `Read Story @${m.key.participant.split("@")[0]}`, mentions: [m.key.participant] }, { quoted: m, ephemeralExpiration: m.expiration })
+         }
+
          // status self apa publik
          if (process.env.PUBLIC !== true && !m.isOwner) return
 
@@ -128,12 +134,6 @@ const startSock = async () => {
          // memunculkan ke log
          if (m.message && !m.isBot) {
             console.log(Color.black(Color.bgWhite("FROM")), Color.black(Color.bgGreen(m.pushName)), Color.black(Color.yellow(m.sender)) + "\n" + Color.black(Color.bgWhite("IN")), Color.black(Color.bgGreen(m.isGroup ? "Group" : "Private")) + "\n" + Color.black(Color.bgWhite("MESSAGE")), Color.black(Color.bgGreen(m.body || m.type)))
-         }
-
-         // untuk membaca pesan status
-         if (m.key && !m.key.fromMe && m.key.remoteJid === "status@broadcast") {
-            await hisoka.readMessages([m.key])
-            await hisoka.sendMessage(jidNormalizedUser(hisoka.user.id), { text: `Read Story @${m.key.participant.split("@")[0]}`, mentions: [m.sender] }, { quoted: m, ephemeralExpiration: m.expiration })
          }
 
          // command
