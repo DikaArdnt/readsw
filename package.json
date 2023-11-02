@@ -16,6 +16,9 @@
   "dependencies": {
     "@whiskeysockets/baileys": "github:WhiskeySockets/Baileys",
     "dotenv": "^16.3.1",
+    "file-type": "^18.6.0",
+    "fluent-ffmpeg": "^2.1.2",
+    "node-webpmux": "^3.1.9",
     "qrcode-terminal": "^0.12.0"
   }
 }

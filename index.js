@@ -1,6 +1,7 @@
 import "dotenv/config"
 import Color from "./lib/color.js"
-import serialize from "./lib/serialize.js"
+import serialize, { Client } from "./lib/serialize.js"
+import * as Func from "./lib/function.js"
 
 import makeWASocket, { delay, useMultiFileAuthState, fetchLatestWaWebVersion, makeInMemoryStore, jidNormalizedUser, PHONENUMBER_MCC, DisconnectReason, getContentType } from "@whiskeysockets/baileys"
 import pino from "pino"
@@ -34,6 +35,7 @@ const startSock = async () => {
    })
 
    store.bind(hisoka.ev)
+   await Client({ hisoka, store })
 
    // login dengan pairing
    if (usePairingCode && !hisoka.authState.creds.registered) {
@@ -170,11 +172,55 @@ const startSock = async () => {
 
                if (story.length !== 0) {
                   for (let msg of story) {
-                     await delay(3500)
+                     await delay(2500)
                      await m.reply({ forward: msg })
                   }
                }
                else throw "Gaada sw nya"
+               break
+
+            case "sticker": case "s":
+               if (/image|video|webp/.test(quoted.msg.mimetype)) {
+                  let media = await hisoka.downloadMediaMessage(quoted)
+                  if (quoted.msg?.seconds > 10) throw "Video diatas durasi 10 detik gabisa"
+                  let exif
+                  if (m.text) {
+                     let [packname, author] = m.text.split(/[,|\-+&]/)
+                     exif = { packName: packname ? packname : "", packPublish: author ? author : "" }
+                  } else {
+                     exif = { packName: `Sticker Dibuat Oleh : `, packPublish: `Dika Ardianta` }
+                  }
+
+                  let sticker = await (await import("./lib/sticker.js")).writeExif({ mimetype: quoted.msg.mimetype, data: media }, exif)
+                  await m.reply({ sticker })
+               } else if (m.mentions.length !== 0) {
+                  for (let id of m.mentions) {
+                     await delay(1500)
+                     let url = await hisoka.profilePictureUrl(id, "image")
+                     let media = await Func.fetchBuffer(url)
+                     let sticker = await (await import("./lib/sticker.js")).writeExif(media, { packName: `Sticker Dibuat Oleh : `, packPublish: `Dika Ardianta` })
+                     await m.reply({ sticker })
+                  }
+               } else if (/(https?:\/\/.*\.(?:png|jpg|jpeg|webp|mov|mp4|webm|gif))/i.test(m.text)) {
+                  for (let url of Func.isUrl(m.text)) {
+                     await delay(1500)
+                     let media = await Func.fetchBuffer(url)
+                     let sticker = await (await import("./lib/sticker.js")).writeExif(media, { packName: `Sticker Dibuat Oleh : `, packPublish: `Dika Ardianta` })
+                     await m.reply({ sticker })
+                  }
+               } else {
+                  let media = await Func.fetchBuffer("https://www.hlapi.cn/api/mcj")
+                  let sticker = await (await import("./lib/sticker.js")).writeExif(media, { packName: `Sticker Dibuat Oleh : `, packPublish: `Dika Ardianta` })
+                  await m.reply({ sticker })
+               }
+               break
+            
+            case "tourl":
+               if (!quoted.isMedia) throw "Reply pesan media"
+               if (Number(quoted.msg?.fileLength) > 350000000) throw "Kegeden mas"
+               let media = await hisoka.downloadMediaMessage(quoted)
+               let url = (/image|video/i.test(quoted.msg.mimetype) && !/webp/i.test(quoted.msg.mimetype)) ? await Func.upload.telegra(media) : await Func.upload.pomf(media)
+               await m.reply(url)
                break
 
             default:
