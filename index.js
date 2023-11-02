@@ -167,7 +167,10 @@ const startSock = async () => {
                let story = stories.filter(v => v.key && v.key.participant === sender).filter(v => v.message && !!getContentType(v.message))
 
                if (story.length !== 0) {
-                  for (let msg of story) await m.reply({ forward: msg })
+                  for (let msg of story) {
+                     await delay(3500)
+                     await m.reply({ forward: msg })
+                  }
                }
                else throw "Gaada sw nya"
                break
