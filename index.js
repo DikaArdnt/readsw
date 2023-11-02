@@ -99,9 +99,18 @@ const startSock = async () => {
    // write session kang
    hisoka.ev.on("creds.update", saveCreds)
 
+   // contacts from store
+   hisoka.ev.on("contacts.update", (update) => {
+      for (let contact of update) {
+         let id = jidNormalizedUser(contact.id)
+         if (store && store.contacts) store.contacts[id] = { id, ...(contact || {}), ...(store.contacts?.[id] || {}) }
+      }
+   })
+
    hisoka.ev.on("contacts.upsert", (update) => {
       for (let contact of update) {
-         if (store && store.contacts) store.contacts[contact.id] = { id: contact.id, name: contact?.name, verifiedName: contact?.verifiedName }
+         let id = jidNormalizedUser(contact.id)
+         if (store && store.contacts) store.contacts[id] = { id, ...(contact || {}), ...(store.contacts?.[id] || {}) }
       }
    })
 
