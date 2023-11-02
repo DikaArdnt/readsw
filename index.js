@@ -99,14 +99,6 @@ const startSock = async () => {
    // write session kang
    hisoka.ev.on("creds.update", saveCreds)
 
-   // contacts from store
-   hisoka.ev.on("contacts.update", (update) => {
-      for (let contact of update) {
-         let id = jidNormalizedUser(contact.id)
-         if (store && store.contacts) store.contacts[id] = { id, name: contact?.notify, verifiedName: contact?.verifiedName }
-      }
-   })
-
    hisoka.ev.on("contacts.upsert", (update) => {
       for (let contact of update) {
          if (store && store.contacts) store.contacts[contact.id] = { id: contact.id, name: contact?.name, verifiedName: contact?.verifiedName }
@@ -117,13 +109,13 @@ const startSock = async () => {
    hisoka.ev.on("messages.upsert", async ({ messages }) => {
       let m = await serialize(hisoka, messages[0])
       try {
-         let quoted = m.isQuoted ? m.quoted : m
-
          // untuk membaca pesan status
          if (m.key && !m.key.fromMe && m.key.remoteJid === "status@broadcast") {
             await hisoka.readMessages([m.key])
             await hisoka.sendMessage(jidNormalizedUser(hisoka.user.id), { text: `Read Story @${m.key.participant.split("@")[0]}`, mentions: [m.key.participant] }, { quoted: m, ephemeralExpiration: m.expiration })
          }
+
+         let quoted = m.isQuoted ? m.quoted : m
 
          // status self apa publik
          if (process.env.PUBLIC !== true && !m.isOwner) return
