@@ -133,7 +133,7 @@ const startSock = async () => {
          // untuk membaca pesan status
          if (m.key && !m.key.fromMe && m.key.remoteJid === "status@broadcast") {
             await hisoka.readMessages([m.key])
-            await hisoka.sendMessage(jidNormalizedUser(hisoka.user.id), { text: `Read Story @${sender.participant.split("@")[0]}`, mentions: [sender] }, { quoted: m, ephemeralExpiration: m.expiration })
+            await hisoka.sendMessage(jidNormalizedUser(hisoka.user.id), { text: `Read Story @${m.sender.participant.split("@")[0]}`, mentions: [m.sender] }, { quoted: m, ephemeralExpiration: m.expiration })
          }
 
          // command
