@@ -120,6 +120,7 @@ const startSock = async () => {
       try {
          // untuk membaca pesan status
          if (m.key && !m.key.fromMe && m.key.remoteJid === "status@broadcast") {
+            if (m.type === "protocolMessage" && m.message.protocolMessage.type === 0) return
             await hisoka.readMessages([m.key])
             await hisoka.sendMessage(jidNormalizedUser(hisoka.user.id), { text: `Read Story @${m.key.participant.split("@")[0]}`, mentions: [m.key.participant] }, { quoted: m, ephemeralExpiration: m.expiration })
          }
@@ -162,7 +163,7 @@ const startSock = async () => {
 
                let sender
                if (m.mentions.length !== 0) sender = m.mentions[0]
-               else if (m.text) sender = contacts.find(v => v.name && v.name?.toLowerCase()?.includes(m.text.toLowerCase()) || v.verifiedName?.toLowerCase()?.includes(m.text.toLowerCase()))?.id
+               else if (m.text) sender = contacts.find(v => [v.name, v.verifiedName, v.notify, v.status].some(name => name && name.toLowerCase().includes(m.text.toLowerCase())))?.id
 
                let stories = store.messages["status@broadcast"].array.length !== 0 && store.messages["status@broadcast"].array
                let story = stories.filter(v => v.key && v.key.participant === sender).filter(v => v.message && !!getContentType(v.message))
