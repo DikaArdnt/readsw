@@ -164,9 +164,11 @@ const startSock = async () => {
                else if (m.text) sender = contacts.find(v => v.name && v.name?.toLowerCase()?.includes(m.text.toLowerCase()) || v.verifiedName?.toLowerCase()?.includes(m.text.toLowerCase()))?.id
 
                let stories = store.messages["status@broadcast"].array.length !== 0 && store.messages["status@broadcast"].array
-               let story = stories.filter(v => v.key && v.key.participant === sender)
+               let story = stories.filter(v => v.key && v.key.participant === sender).filter(v => v.message && !!getContentType(v.message))
 
-               if (story.length !== 0) story.filter(v => v.message && !!getContentType(v.message)).map(async msg => await m.reply({ forward: msg }))
+               if (story.length !== 0) {
+                  for (let msg of story) await m.reply({ forward: msg })
+               }
                else throw "Gaada sw nya"
                break
 
