@@ -2,7 +2,7 @@ import "dotenv/config"
 import Color from "./lib/color.js"
 import serialize from "./lib/serialize.js"
 
-import makeWASocket, { delay, useMultiFileAuthState, fetchLatestWaWebVersion, makeInMemoryStore, jidNormalizedUser, PHONENUMBER_MCC, DisconnectReason } from "@whiskeysockets/baileys"
+import makeWASocket, { delay, useMultiFileAuthState, fetchLatestWaWebVersion, makeInMemoryStore, jidNormalizedUser, PHONENUMBER_MCC, DisconnectReason, getContentType } from "@whiskeysockets/baileys"
 import pino from "pino"
 import { Boom } from "@hapi/boom"
 import fs from "fs"
@@ -133,7 +133,7 @@ const startSock = async () => {
          // untuk membaca pesan status
          if (m.key && !m.key.fromMe && m.key.remoteJid === "status@broadcast") {
             await hisoka.readMessages([m.key])
-            await hisoka.sendMessage(jidNormalizedUser(hisoka.user.id), { text: `Read Story @${m.sender.split("@")[0]}`, mentions: [m.sender] }, { quoted: m, ephemeralExpiration: m.expiration })
+            await hisoka.sendMessage(jidNormalizedUser(hisoka.user.id), { text: `Read Story @${m.key.participant.split("@")[0]}`, mentions: [m.sender] }, { quoted: m, ephemeralExpiration: m.expiration })
          }
 
          // command
@@ -153,6 +153,21 @@ const startSock = async () => {
                if (!quoted.msg.viewOnce) throw "Reply Pesan Sekali Lihat"
                quoted.msg.viewOnce = false
                await m.reply({ forward: quoted })
+               break
+
+            case "getsw": case "sw":
+               if (!store.messages["status@broadcast"]) throw "Gaada 1 status pun"
+               let contacts = Object.values(store.contacts)
+
+               let sender
+               if (m.mentions.length !== 0) sender = m.mentions[0]
+               else if (m.text) sender = contacts.find(v => v.name && v.name?.toLowerCase()?.includes(m.text.toLowerCase()) || v.verifiedName?.toLowerCase()?.includes(m.text.toLowerCase()))?.id
+
+               let stories = store.messages["status@broadcast"].array.length !== 0 && store.messages["status@broadcast"].array
+               let story = stories.filter(v => v.key && v.key.participant === sender)
+
+               if (story.length !== 0) story.filter(v => v.message && !!getContentType(v.message)).map(async msg => await m.reply({ forward: msg }))
+               else throw "Gaada sw nya"
                break
 
             default:
@@ -203,12 +218,10 @@ const startSock = async () => {
 // opsional
 async function getMessage(key) {
    try {
-      if (useStore) {
-         const jid = jidNormalizedUser(key.remoteJid)
-         const msg = await store.loadMessage(jid, key.id)
+      const jid = jidNormalizedUser(key.remoteJid)
+      const msg = await store.loadMessage(jid, key.id)
 
-         return msg?.message || ""
-      }
+      return msg?.message || ""
 
       return ""
    } catch { }
