@@ -31,6 +31,7 @@ const startSock = async () => {
       auth: state,
       browser: ['Chrome (Linux)', '', ''],
       markOnlineOnConnect: false,
+      generateHighQualityLinkPreview: true,
       getMessage
    })
 
@@ -101,7 +102,7 @@ const startSock = async () => {
    // write session kang
    hisoka.ev.on("creds.update", saveCreds)
 
-   // contacts from store
+   // add contacts update to store
    hisoka.ev.on("contacts.update", (update) => {
       for (let contact of update) {
          let id = jidNormalizedUser(contact.id)
@@ -109,6 +110,7 @@ const startSock = async () => {
       }
    })
 
+   // add contacts upsert to store
    hisoka.ev.on("contacts.upsert", (update) => {
       for (let contact of update) {
          let id = jidNormalizedUser(contact.id)
@@ -116,9 +118,44 @@ const startSock = async () => {
       }
    })
 
+   // nambah perubahan grup ke store
+   hisoka.ev.on("groups.update", (updates) => {
+      for (const update of updates) {
+         const id = update.id
+         if (store.groupMetadata[id]) {
+            store.groupMetadata[id] = { ...(store.groupMetadata[id] || {}), ...(update || {}) }
+         }
+      }
+   })
+
+   // merubah status member
+   hisoka.ev.on('group-participants.update', ({ id, participants, action }) => {
+      const metadata = store.groupMetadata[id]
+      if (metadata) {
+         switch (action) {
+            case 'add':
+            case "revoked_membership_requests":
+               metadata.participants.push(...participants.map(id => ({ id: jidNormalizedUser(id), admin: null })))
+               break
+            case 'demote':
+            case 'promote':
+               for (const participant of metadata.participants) {
+                  let id = jidNormalizedUser(participant.id)
+                  if (participants.includes(id)) {
+                     participant.admin = (action === "promote" ? "admin" : null)
+                  }
+               }
+               break
+            case 'remove':
+               metadata.participants = metadata.participants.filter(p => !participants.includes(jidNormalizedUser(p.id)))
+               break
+         }
+      }
+   })
+
    // bagian pepmbaca status ono ng kene
    hisoka.ev.on("messages.upsert", async ({ messages }) => {
-      let m = await serialize(hisoka, messages[0])
+      let m = await serialize(hisoka, messages[0], store)
       try {
          // untuk membaca pesan status
          if (m.key && !m.key.fromMe && m.key.remoteJid === "status@broadcast") {
@@ -127,8 +164,12 @@ const startSock = async () => {
             await hisoka.sendMessage(jidNormalizedUser(hisoka.user.id), { text: `Read Story @${m.key.participant.split("@")[0]}`, mentions: [m.key.participant] }, { quoted: m, ephemeralExpiration: m.expiration })
          }
 
+         // nambah semua metadata ke store
+         if (store.groupMetadata && Object.keys(store.groupMetadata).length === 0) store.groupMetadata = await hisoka.groupFetchAllParticipating()
+
          let quoted = m.isQuoted ? m.quoted : m
          let downloadM = async (filename) => await hisoka.downloadMediaMessage(quoted, filename)
+         let metadata = m.isGroup ? store.groupMetadata[m.from] : store.contacts[m.from]
 
          // status self apa publik
          if (process.env.PUBLIC !== true && !m.isOwner) return
@@ -143,10 +184,85 @@ const startSock = async () => {
 
          // command
          switch (m.command) {
+            case "info": {
+               let os = (await import("os")).default
+               let v8 = (await import("v8")).default
+               let { performance } = (await import("perf_hooks")).default
+               let eold = performance.now()
+
+               const used = process.memoryUsage()
+               const cpus = os.cpus().map(cpu => {
+                  cpu.total = Object.keys(cpu.times).reduce((last, type) => last + cpu.times[type], 0)
+                  return cpu
+               })
+               const cpu = cpus.reduce((last, cpu, _, { length }) => {
+                  last.total += cpu.total
+                  last.speed += cpu.speed / length
+                  last.times.user += cpu.times.user
+                  last.times.nice += cpu.times.nice
+                  last.times.sys += cpu.times.sys
+                  last.times.idle += cpu.times.idle
+                  last.times.irq += cpu.times.irq
+                  return last
+               }, {
+                  speed: 0,
+                  total: 0,
+                  times: {
+                     user: 0,
+                     nice: 0,
+                     sys: 0,
+                     idle: 0,
+                     irq: 0
+                  }
+               })
+               let heapStat = v8.getHeapStatistics()
+               let neow = performance.now()
+
+               let teks = `
+*Ping :* *_${Number(neow - eold).toFixed(2)} milisecond(s)_*
+
+💻 *_Info Server_*
+*- Hostname :* ${(os.hostname() || hisoka.user?.name)}
+*- Platform :* ${os.platform()}
+*- OS :* ${os.version()} / ${os.release()}
+*- Arch :* ${os.arch()}
+*- RAM :* ${Func.formatSize(os.totalmem() - os.freemem(), false)} / ${Func.formatSize(os.totalmem(), false)}
+
+*_Runtime OS_*
+${Func.runtime(os.uptime())}
+
+*_Runtime Bot_*
+${Func.runtime(process.uptime())}
+
+*_NodeJS Memory Usage_*
+${Object.keys(used).map((key, _, arr) => `*- ${key.padEnd(Math.max(...arr.map(v => v.length)), ' ')} :* ${Func.formatSize(used[key])}`).join('\n')}
+*- Heap Executable :* ${Func.formatSize(heapStat?.total_heap_size_executable)}
+*- Physical Size :* ${Func.formatSize(heapStat?.total_physical_size)}
+*- Available Size :* ${Func.formatSize(heapStat?.total_available_size)}
+*- Heap Limit :* ${Func.formatSize(heapStat?.heap_size_limit)}
+*- Malloced Memory :* ${Func.formatSize(heapStat?.malloced_memory)}
+*- Peak Malloced Memory :* ${Func.formatSize(heapStat?.peak_malloced_memory)}
+*- Does Zap Garbage :* ${Func.formatSize(heapStat?.does_zap_garbage)}
+*- Native Contexts :* ${Func.formatSize(heapStat?.number_of_native_contexts)}
+*- Detached Contexts :* ${Func.formatSize(heapStat?.number_of_detached_contexts)}
+*- Total Global Handles :* ${Func.formatSize(heapStat?.total_global_handles_size)}
+*- Used Global Handles :* ${Func.formatSize(heapStat?.used_global_handles_size)}
+${cpus[0] ? `
+
+*_Total CPU Usage_*
+${cpus[0].model.trim()} (${cpu.speed} MHZ)\n${Object.keys(cpu.times).map(type => `*- ${(type + '*').padEnd(6)}: ${(100 * cpu.times[type] / cpu.total).toFixed(2)}%`).join('\n')}
+
+*_CPU Core(s) Usage (${cpus.length} Core CPU)_*
+${cpus.map((cpu, i) => `${i + 1}. ${cpu.model.trim()} (${cpu.speed} MHZ)\n${Object.keys(cpu.times).map(type => `*- ${(type + '*').padEnd(6)}: ${(100 * cpu.times[type] / cpu.total).toFixed(2)}%`).join('\n')}`).join('\n\n')}` : ''}
+`.trim()
+               await m.reply(teks)
+            }
+               break
+
             case "quoted": case "q":
                if (!m.isQuoted) throw "Reply Pesan"
                try {
-                  var message = await serialize(hisoka, (await store.loadMessage(m.from, m.quoted.id)))
+                  var message = await serialize(hisoka, (await store.loadMessage(m.from, m.quoted.id)), store)
                   if (!message.isQuoted) throw "Pesan quoted gaada"
                   await m.reply({ forward: message.quoted })
                } catch (e) {
@@ -251,7 +367,12 @@ const startSock = async () => {
                let url = (/image|video/i.test(quoted.msg.mimetype) && !/webp/i.test(quoted.msg.mimetype)) ? await Func.upload.telegra(media) : await Func.upload.pomf(media)
                await m.reply(url)
                break
-            
+
+            case "link":
+               if (!m.isGroup && !m.isBotAdmin) throw "Gabisa, kalo ga karena bot bukan admin ya karena bukan grup"
+               await m.reply("https://chat.whatsapp.com/" + await hisoka.groupInviteCode(m.from))
+               break
+
             default:
                // eval
                if ([">", "eval", "=>"].some(a => m.body?.toLowerCase()?.startsWith(a)) && m.isOwner) {
@@ -280,12 +401,12 @@ const startSock = async () => {
                         if (stdout) return m.reply(util.format(stdout))
                      })
                   } catch (e) {
-                     await m.reply(util.format(e))
+                     await hisoka.sendMessage(messages[0].key.remoteJid, { text: util.format(e) }, { quoted: messages[0] })
                   }
                }
          }
       } catch (err) {
-         await m.reply(util.format(err))
+         await hisoka.sendMessage(messages[0].key.remoteJid, { text: util.format(err) }, { quoted: messages[0] })
       }
    })
 
