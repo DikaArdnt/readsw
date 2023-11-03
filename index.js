@@ -128,6 +128,7 @@ const startSock = async () => {
          }
 
          let quoted = m.isQuoted ? m.quoted : m
+         let downloadM = async (filename) => await hisoka.downloadMediaMessage(quoted, filename)
 
          // status self apa publik
          if (process.env.PUBLIC !== true && !m.isOwner) return
@@ -179,9 +180,37 @@ const startSock = async () => {
                else throw "Gaada sw nya"
                break
 
+            case "upsw":
+               let statusJidList = Object.keys(store.contacts)
+               let colors = [0xff26c4dc, 0xff792138, 0xff8b6990, 0xfff0b330, 0xffae8774, 0xff5696ff, 0xffff7b6b, 0xff57c9ff, 0xff243640, 0xffb6b327, 0xffc69fcc, 0xff54c265, 0xff6e257e, 0xffc1a03f, 0xff90a841, 0xff7acba5, 0xff8294ca, 0xffa62c71, 0xffff8a8c, 0xff7e90a3, 0xff74676a]
+               if (!quoted.isMedia) {
+                  let text = m.text || m.quoted?.body || ""
+                  if (!text) throw "Mana text?"
+                  await hisoka.sendMessage("status@broadcast", { text }, {
+                     backgroundColor: colors[Math.floor(Math.random() * colors.length)],
+                     textArgb: 0xffffffff,
+                     font: Math.floor(Math.random() * 9),
+                     statusJidList
+                  })
+               } else if (/audio/.test(quoted.msg.mimetype)) {
+                  await hisoka.sendMessage("status@broadcast", {
+                     audio: await downloadM(),
+                     mimetype: 'audio/mp4',
+                     ptt: true
+                  }, { backgroundColor: colors[Math.floor(Math.random() * colors.length)], statusJidList })
+               } else {
+                  let type = /image/.test(quoted.msg.mimetype) ? "image" : /video/.test(quoted.msg.mimetype) ? "video" : false
+                  if (!type) throw "Type tidak didukung"
+                  await hisoka.sendMessage("status@broadcast", {
+                     [`${type}`]: await downloadM(),
+                     caption: m.text || m.quoted?.body || ""
+                  }, { statusJidList })
+               }
+               break
+
             case "sticker": case "s":
                if (/image|video|webp/.test(quoted.msg.mimetype)) {
-                  let media = await hisoka.downloadMediaMessage(quoted)
+                  let media = await downloadM()
                   if (quoted.msg?.seconds > 10) throw "Video diatas durasi 10 detik gabisa"
                   let exif
                   if (m.text) {
@@ -214,7 +243,7 @@ const startSock = async () => {
                   await m.reply({ sticker })
                }
                break
-            
+
             case "tourl":
                if (!quoted.isMedia) throw "Reply pesan media"
                if (Number(quoted.msg?.fileLength) > 350000000) throw "Kegeden mas"
@@ -222,7 +251,7 @@ const startSock = async () => {
                let url = (/image|video/i.test(quoted.msg.mimetype) && !/webp/i.test(quoted.msg.mimetype)) ? await Func.upload.telegra(media) : await Func.upload.pomf(media)
                await m.reply(url)
                break
-
+            
             default:
                // eval
                if ([">", "eval", "=>"].some(a => m.body?.toLowerCase()?.startsWith(a)) && m.isOwner) {
