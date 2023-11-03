@@ -1,9 +1,9 @@
 import "dotenv/config"
 import Color from "./lib/color.js"
-import serialize, { Client } from "./lib/serialize.js"
+import serialize, { Client, getContentType } from "./lib/serialize.js"
 import * as Func from "./lib/function.js"
 
-import makeWASocket, { delay, useMultiFileAuthState, fetchLatestWaWebVersion, makeInMemoryStore, jidNormalizedUser, PHONENUMBER_MCC, DisconnectReason, getContentType } from "@whiskeysockets/baileys"
+import makeWASocket, { delay, useMultiFileAuthState, fetchLatestWaWebVersion, makeInMemoryStore, jidNormalizedUser, PHONENUMBER_MCC, DisconnectReason } from "@whiskeysockets/baileys"
 import pino from "pino"
 import { Boom } from "@hapi/boom"
 import fs from "fs"
@@ -155,6 +155,7 @@ const startSock = async () => {
 
    // bagian pepmbaca status ono ng kene
    hisoka.ev.on("messages.upsert", async ({ messages }) => {
+      if (!messages[0].message) return
       let m = await serialize(hisoka, messages[0], store)
       try {
          // untuk membaca pesan status
@@ -275,24 +276,53 @@ ${cpus.map((cpu, i) => `${i + 1}. ${cpu.model.trim()} (${cpu.speed} MHZ)\n${Obje
                await m.reply({ forward: quoted })
                break
 
-            case "getsw": case "sw":
-               if (!store.messages["status@broadcast"]) throw "Gaada 1 status pun"
+            case "getsw": case "sw": {
+               if (!store.messages["status@broadcast"].array.length === 0) throw "Gaada 1 status pun"
                let contacts = Object.values(store.contacts)
+               let [who, value] = m.text.split("|")
+               value = value?.replace(/\D+/g, "")
 
                let sender
                if (m.mentions.length !== 0) sender = m.mentions[0]
-               else if (m.text) sender = contacts.find(v => [v.name, v.verifiedName, v.notify, v.status].some(name => name && name.toLowerCase().includes(m.text.toLowerCase())))?.id
+               else if (m.text) sender = contacts.find(v => [v.name, v.verifiedName, v.notify].some(name => name && name.toLowerCase().includes(who.toLowerCase())))?.id
 
-               let stories = store.messages["status@broadcast"].array.length !== 0 && store.messages["status@broadcast"].array
-               let story = stories.filter(v => v.key && v.key.participant === sender).filter(v => v.message && !!getContentType(v.message))
-
-               if (story.length !== 0) {
+               let stories = store.messages["status@broadcast"].array
+               let story = stories.filter(v => v.key && v.key.participant === sender || v.participant === sender).filter(v => v.message && v.message.protocolMessage?.type !== 0)
+               if (story.length === 0) throw "Gaada sw nya"
+               if (value) {
+                  if (story.length < value) throw "Jumlahnya ga sampe segitu"
+                  await m.reply({ forward: story[value - 1] })
+               } else {
                   for (let msg of story) {
-                     await delay(2500)
+                     await delay(2000)
                      await m.reply({ forward: msg })
                   }
                }
-               else throw "Gaada sw nya"
+            }
+               break
+
+            case "listsw": {
+               if (!store.messages["status@broadcast"].array.length === 0) throw "Gaada 1 status pun"
+               let stories = store.messages["status@broadcast"].array
+               let story = stories.filter(v => v.message && v.message.protocolMessage?.type !== 0)
+               if (story.length === 0) throw "Status gaada"
+               const result = {}
+               story.forEach(obj => {
+                  let participant = obj.key.participant || obj.participant
+                  if (!result[participant]) {
+                     result[participant] = []
+                  }
+                  result[participant].push(obj)
+               })
+               let type = (mType) => getContentType(mType) === "extendedTextMessage" ? "text" : getContentType(mType).replace("Message", "")
+               let text = ""
+               for (let id of Object.keys(result)) {
+                  if (!id) return
+                  text += `*- ${await hisoka.getName(id)}*\n`
+                  text += `${result[id].map((v, i) => `${i + 1}. ${type(v.message)}`).join("\n")}\n\n`
+               }
+               await m.reply(text.trim(), { mentions: Object.keys(result) })
+            }
                break
 
             case "upsw":
@@ -376,7 +406,7 @@ ${cpus.map((cpu, i) => `${i + 1}. ${cpu.model.trim()} (${cpu.speed} MHZ)\n${Obje
 
             case "link":
                if (!m.isGroup && !m.isBotAdmin) throw "Gabisa, kalo ga karena bot bukan admin ya karena bukan grup"
-               await m.reply("https://chat.whatsapp.com/" + await hisoka.groupInviteCode(m.from))
+               await m.reply("https://chat.whatsapp.com/" + (m.metadata?.inviteCode || await hisoka.groupInviteCode(m.from)))
                break
 
             case "delete": case "del":
@@ -422,7 +452,7 @@ ${cpus.map((cpu, i) => `${i + 1}. ${cpu.model.trim()} (${cpu.speed} MHZ)\n${Obje
                }
          }
       } catch (err) {
-         await hisoka.sendMessage(messages[0].key.remoteJid, { text: util.format(err) }, { quoted: messages[0] })
+         await m.reply(util.format(err))
       }
    })
 
