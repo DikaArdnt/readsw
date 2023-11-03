@@ -169,7 +169,6 @@ const startSock = async () => {
 
          let quoted = m.isQuoted ? m.quoted : m
          let downloadM = async (filename) => await hisoka.downloadMediaMessage(quoted, filename)
-         let metadata = m.isGroup ? store.groupMetadata[m.from] : store.contacts[m.from]
 
          // status self apa publik
          if (process.env.PUBLIC !== true && !m.isOwner) return
@@ -360,10 +359,17 @@ ${cpus.map((cpu, i) => `${i + 1}. ${cpu.model.trim()} (${cpu.speed} MHZ)\n${Obje
                }
                break
 
+            case "exif":
+               let webp = (await import("node-webpmux")).default
+               let img = new webp.Image()
+               await img.load(await downloadM())
+               await m.reply(util.format((JSON.parse(img.exif.slice(22).toString()))))
+               break
+
             case "tourl":
                if (!quoted.isMedia) throw "Reply pesan media"
                if (Number(quoted.msg?.fileLength) > 350000000) throw "Kegeden mas"
-               let media = await hisoka.downloadMediaMessage(quoted)
+               let media = await downloadM()
                let url = (/image|video/i.test(quoted.msg.mimetype) && !/webp/i.test(quoted.msg.mimetype)) ? await Func.upload.telegra(media) : await Func.upload.pomf(media)
                await m.reply(url)
                break
@@ -371,6 +377,16 @@ ${cpus.map((cpu, i) => `${i + 1}. ${cpu.model.trim()} (${cpu.speed} MHZ)\n${Obje
             case "link":
                if (!m.isGroup && !m.isBotAdmin) throw "Gabisa, kalo ga karena bot bukan admin ya karena bukan grup"
                await m.reply("https://chat.whatsapp.com/" + await hisoka.groupInviteCode(m.from))
+               break
+
+            case "delete": case "del":
+               if (quoted.fromMe) {
+                  await hisoka.sendMessage(m.from, { delete: quoted.key })
+               } else {
+                  if (!m.isBotAdmin) throw "Bot bukan admin"
+                  if (!m.isAdmin) throw "Lhu bukan admin paok 😂"
+                  await hisoka.sendMessage(m.from, { delete: quoted.key })
+               }
                break
 
             default:
@@ -401,7 +417,7 @@ ${cpus.map((cpu, i) => `${i + 1}. ${cpu.model.trim()} (${cpu.speed} MHZ)\n${Obje
                         if (stdout) return m.reply(util.format(stdout))
                      })
                   } catch (e) {
-                     await hisoka.sendMessage(messages[0].key.remoteJid, { text: util.format(e) }, { quoted: messages[0] })
+                     await m.reply(util.format(e))
                   }
                }
          }
