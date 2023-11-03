@@ -279,7 +279,7 @@ ${cpus.map((cpu, i) => `${i + 1}. ${cpu.model.trim()} (${cpu.speed} MHZ)\n${Obje
             case "getsw": case "sw": {
                if (!store.messages["status@broadcast"].array.length === 0) throw "Gaada 1 status pun"
                let contacts = Object.values(store.contacts)
-               let [who, value] = m.text.split("|")
+               let [who, value] = m.text.split(/[,|\-+&]/)
                value = value?.replace(/\D+/g, "")
 
                let sender
