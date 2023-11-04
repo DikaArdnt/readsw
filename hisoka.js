@@ -31,6 +31,7 @@ const startSock = async () => {
       browser: ['Chrome (Linux)', '', ''],
       markOnlineOnConnect: false,
       generateHighQualityLinkPreview: true,
+      syncFullHistory: true,
       getMessage
    })
 
@@ -105,15 +106,16 @@ const startSock = async () => {
    hisoka.ev.on("contacts.update", (update) => {
       for (let contact of update) {
          let id = jidNormalizedUser(contact.id)
-         if (store && store.contacts) store.contacts[id] = { id, ...(contact || {}), ...(store.contacts?.[id] || {}) }
+         if (store && store.contacts) store.contacts[id] = { ...(store.contacts?.[id] || {}), ...(contact || {}) }
       }
    })
 
    // add contacts upsert to store
    hisoka.ev.on("contacts.upsert", (update) => {
+      console.log(update)
       for (let contact of update) {
          let id = jidNormalizedUser(contact.id)
-         if (store && store.contacts) store.contacts[id] = { id, ...(contact || {}), ...(store.contacts?.[id] || {}) }
+         if (store && store.contacts) store.contacts[id] = { ...(contact || {}), isContact: true }
       }
    })
 

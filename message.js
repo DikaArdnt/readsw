@@ -186,7 +186,7 @@ ${cpus.map((cpu, i) => `${i + 1}. ${cpu.model.trim()} (${cpu.speed} MHZ)\n${Obje
 
          case "upsw":
             if (!m.isOwner) return
-            let statusJidList = Object.keys(store.contacts)
+            let statusJidList = Object.values(store.contacts).filter(v => v.isContact).map(v => v.id)
             let colors = [0xff26c4dc, 0xff792138, 0xff8b6990, 0xfff0b330, 0xffae8774, 0xff5696ff, 0xffff7b6b, 0xff57c9ff, 0xff243640, 0xffb6b327, 0xffc69fcc, 0xff54c265, 0xff6e257e, 0xffc1a03f, 0xff90a841, 0xff7acba5, 0xff8294ca, 0xffa62c71, 0xffff8a8c, 0xff7e90a3, 0xff74676a]
             if (!quoted.isMedia) {
                let text = m.text || m.quoted?.body || ""
