@@ -11,6 +11,7 @@ export default async function message(hisoka, store, m) {
    try {
       let quoted = m.isQuoted ? m.quoted : m
       let downloadM = async (filename) => await hisoka.downloadMediaMessage(quoted, filename)
+      let isCommand = m.prefix && m.body.startsWith(m.prefix) || false
 
       // mengabaikan pesan dari bot
       if (m.isBot) return
@@ -21,7 +22,7 @@ export default async function message(hisoka, store, m) {
       }
 
       // command
-      switch (m.command.toLowerCase()) {
+      switch (isCommand ? m.command.toLowerCase() : false) {
          case "menu": {
             let menu = {
                main: ["menu", "info", "delete", "quoted", "listsw", "getsw"],
