@@ -112,7 +112,6 @@ const startSock = async () => {
 
    // add contacts upsert to store
    hisoka.ev.on("contacts.upsert", (update) => {
-      console.log(update)
       for (let contact of update) {
          let id = jidNormalizedUser(contact.id)
          if (store && store.contacts) store.contacts[id] = { ...(contact || {}), isContact: true }
