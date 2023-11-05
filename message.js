@@ -1,5 +1,5 @@
 import "dotenv/config"
-import { delay } from "@whiskeysockets/baileys"
+import { delay, jidNormalizedUser } from "@whiskeysockets/baileys"
 
 import * as Func from "./lib/function.js"
 import serialize, { getContentType } from "./lib/serialize.js"
@@ -168,7 +168,7 @@ ${cpus.map((cpu, i) => `${i + 1}. ${cpu.model.trim()} (${cpu.speed} MHZ)\n${Obje
             if (story.length === 0) throw "Status gaada"
             const result = {}
             story.forEach(obj => {
-               let participant = obj.key.participant || obj.participant
+               let participant = jidNormalizedUser(obj.key.participant || obj.participant)
                if (!result[participant]) {
                   result[participant] = []
                }
