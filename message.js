@@ -168,7 +168,8 @@ ${cpus.map((cpu, i) => `${i + 1}. ${cpu.model.trim()} (${cpu.speed} MHZ)\n${Obje
             if (story.length === 0) throw "Status gaada"
             const result = {}
             story.forEach(obj => {
-               let participant = jidNormalizedUser(obj.key.participant || obj.participant)
+               let participant = obj.key.participant || obj.participant
+               participant = jidNormalizedUser(participant === "status_me" ? hisoka.user.id : participant)
                if (!result[participant]) {
                   result[participant] = []
                }
