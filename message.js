@@ -1,4 +1,5 @@
 import "dotenv/config"
+import { delay } from "@whiskeysockets/baileys"
 
 import * as Func from "./lib/function.js"
 import serialize, { getContentType } from "./lib/serialize.js"
@@ -153,7 +154,7 @@ ${cpus.map((cpu, i) => `${i + 1}. ${cpu.model.trim()} (${cpu.speed} MHZ)\n${Obje
                await m.reply({ forward: story[value - 1], force: true })
             } else {
                for (let msg of story) {
-                  await delay(2000)
+                  await delay(1500)
                   await m.reply({ forward: msg, force: true })
                }
             }

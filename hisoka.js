@@ -8,6 +8,7 @@ import { Boom } from "@hapi/boom"
 import fs from "fs"
 import os from "os"
 import { exec } from "child_process"
+import treeKill from "tree-kill"
 
 const logger = pino({ timestamp: () => `,"time":"${new Date().toJSON()}"` }).child({ class: "hisoka" })
 logger.level = "fatal"
@@ -15,10 +16,10 @@ logger.level = "fatal"
 const usePairingCode = process.env.PAIRING_NUMBER
 
 const store = makeInMemoryStore({ logger })
-if (process.env.WRITE_STORE === 'true') store.readFromFile("./session/store.json")
+if (process.env.WRITE_STORE === 'true') store.readFromFile(`./${process.env.SESSION_NAME}/store.json`)
 
 const startSock = async () => {
-   const { state, saveCreds } = await useMultiFileAuthState("./session")
+   const { state, saveCreds } = await useMultiFileAuthState(`./${process.env.SESSION_NAME}`)
    const { version, isLatest } = await fetchLatestWaWebVersion()
 
    console.log(`using WA v${version.join('.')}, isLatest: ${isLatest}`)
@@ -82,11 +83,19 @@ const startSock = async () => {
                break
             case DisconnectReason.loggedOut:
                console.error("Device has Logged Out, please rescan again...")
-               fs.rmdirSync("./session")
+               hisoka.end()
+               fs.rmSync(`./${process.env.SESSION_NAME}`, { recursive: true, force: true })
+               exec("npm run stop:pm2", (err) => {
+                  if (err) return treeKill(process.pid)
+               })
                break
             case DisconnectReason.multideviceMismatch:
                console.error("Nedd Multi Device Version, please update and rescan again...")
-               fs.rmdirSync("./session")
+               hisoka.end()
+               fs.rmSync(`./${process.env.SESSION_NAME}`, { recursive: true, force: true })
+               exec("npm run stop:pm2", (err) => {
+                  if (err) return treeKill(process.pid)
+               })
                break
             default:
                console.log("Aku ra ngerti masalah opo iki")
@@ -177,7 +186,7 @@ const startSock = async () => {
 
    setInterval(async () => {
       // write store
-      if (process.env.WRITE_STORE === 'true') store.writeToFile("./session/store.json")
+      if (process.env.WRITE_STORE === 'true') store.writeToFile(`./${process.env.SESSION_NAME}/store.json`)
 
       // untuk auto restart ketika RAM sisa 300MB
       const memoryUsage = (os.totalmem() - os.freemem())
