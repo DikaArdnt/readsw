@@ -1,7 +1,7 @@
 import { exec, spawn } from "child_process"
 import path from "path"
 import { watchFile, unwatchFile } from "fs"
-import treeKill from "tree-kill"
+import treeKill from "./lib/tree-kill.js"
 
 let activeProcess = null
 

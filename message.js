@@ -26,7 +26,7 @@ export default async function message(hisoka, store, m) {
       switch (isCommand ? m.command.toLowerCase() : false) {
          case "menu": {
             let menu = {
-               main: ["menu", "info", "delete", "quoted", "listsw", "getsw"],
+               main: ["menu", "info", "delete", "quoted", "listsw", "getsw", "sc"],
                tool: ["rvo", "exif", "tourl", "sticker"],
                owner: ["upsw", "restart", "contact", "eval", "exec"],
                group: ["link"]
@@ -295,6 +295,10 @@ ${cpus.map((cpu, i) => `${i + 1}. ${cpu.model.trim()} (${cpu.speed} MHZ)\n${Obje
             if (contacts.length === 0) throw "Kontak gaada"
             await hisoka.sendContact(m.from, contacts.map(v => v && v.id), m, { ephemeralExpiration: m.expiration })
          }
+            break
+         
+         case "sc":
+            await m.reply("https://file.ardnt.id/zvS4VG8vBg8ilFaD0vco")
             break
 
          default:
