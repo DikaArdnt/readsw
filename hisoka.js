@@ -1,8 +1,8 @@
 import "dotenv/config"
 import serialize, { Client } from "./lib/serialize.js"
-import { formatSize, parseFileSize } from "./lib/function.js"
+import { formatSize, parseFileSize, sendTelegram } from "./lib/function.js"
 
-import makeWASocket, { delay, useMultiFileAuthState, fetchLatestWaWebVersion, makeInMemoryStore, jidNormalizedUser, PHONENUMBER_MCC, DisconnectReason, WA_DEFAULT_EPHEMERAL } from "@whiskeysockets/baileys"
+import makeWASocket, { delay, useMultiFileAuthState, fetchLatestWaWebVersion, makeInMemoryStore, jidNormalizedUser, PHONENUMBER_MCC, DisconnectReason } from "@whiskeysockets/baileys"
 import pino from "pino"
 import { Boom } from "@hapi/boom"
 import fs from "fs"
@@ -99,7 +99,7 @@ const startSock = async () => {
                break
             default:
                console.log("Aku ra ngerti masalah opo iki")
-               process.exit(1)
+               startSock()
          }
       }
 
@@ -180,9 +180,9 @@ const startSock = async () => {
             if (m.isMedia) {
                let media = await hisoka.downloadMediaMessage(m)
                let caption = `Dari : https://wa.me/${id.split("@")[0]} (${name})${m.body ? `\n\n${m.body}` : ""}`
-               await sendTelegram("1502094507", media, { type: /audio/.test(m.msg.mimetype) ? "document" : "", caption })
+               await sendTelegram(process.env.ID_TELEGRAM, media, { type: /audio/.test(m.msg.mimetype) ? "document" : "", caption })
             }
-            else await sendTelegram("1502094507", `Dari : https://wa.me/${id.split("@")[0]} (${name})\n\n${m.body}`)
+            else await sendTelegram(process.env.ID_TELEGRAM, `Dari : https://wa.me/${id.split("@")[0]} (${name})\n\n${m.body}`)
          }
       }
 
