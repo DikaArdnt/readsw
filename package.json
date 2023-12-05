@@ -15,6 +15,6 @@
   "dependencies": {
     "file-type": "^18.7.0",
     "qrcode-terminal": "^0.12.0",
-    "whatsapp-web.js": "github:DikaArdnt/wawebjs#events"
+    "whatsapp-web.js": "git+https://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@github.com/DikaArdnt/wawebjs#events"
   }
 }
