@@ -13,6 +13,7 @@ export default async function (hisoka, m) {
 
       if (!m._data.isNewMsg) return
       if (!isOwner && config.SELF) return
+      if (m.id.fromMe && m.id.id.startsWith('3EB0')) return
 
       let prefix = (new RegExp(config.PREFIX, 'u')).test(m.body) ? m.body.match(new RegExp(config.PREFIX, 'u'))[0] : ''
       let command = m.body && m.body.trim().replace(prefix, '').trim().split(/ +/).shift()
@@ -103,6 +104,10 @@ ${cpus.map((cpu, i) => `${i + 1}. ${cpu.model.trim()} (${cpu.speed} MHZ)\n${Obje
          }
             break
 
+         case 'sswa':
+            let wa = await hisoka.playPage.screenshot({ type: 'png', fullPage: true })
+            await m.reply(new wajs.MessageMedia('image/png', wa.toString('base64')))
+            break
 
          default:
             text = text.trim().replace(new RegExp("^" + func.escapeRegExp(prefix), 'i'), '').replace(command, '').trim()
