@@ -146,6 +146,6 @@ ${cpus.map((cpu, i) => `${i + 1}. ${cpu.model.trim()} (${cpu.speed} MHZ)\n${Obje
             }
       }
    } catch (err) {
-      await m.reply(util.format(err))
+      console.error(err)
    }
 }
