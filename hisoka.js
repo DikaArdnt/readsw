@@ -48,6 +48,14 @@ const startClient = async () => {
       qrcode.generate(code, { small: true })
    })
 
+   hisoka.on('authenticated', () => {
+      console.log('authenticated')
+   })
+
+   hisoka.on('change_state', (state) => {
+      console.log(state)
+   })
+
    hisoka.on('disconnected', (reason) => {
       if (reason) startClient()
    })
