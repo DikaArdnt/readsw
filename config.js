@@ -13,9 +13,8 @@ const Keys = [
       value: "halahhisoka"
    },
    {
-      name: "skizo",
-      host: "https://skizo.tech",
-      value: "ximixomoxixi"
+      name: "aemt",
+      host: "https://aemt.me"
    },
    {
       name: "ardnt",

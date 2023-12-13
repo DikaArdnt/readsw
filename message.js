@@ -3,7 +3,7 @@ import * as func from './lib/function.js'
 import Color from './lib/color.js'
 
 import util from 'util'
-import wajs from 'whatsapp-web.js'
+import wajs from 'wajs'
 import { exec } from 'child_process'
 import { performance } from 'perf_hooks'
 

@@ -3,7 +3,7 @@ import config from "./config.js"
 
 import { formatSize, parseFileSize } from "./lib/function.js"
 
-import { Client } from "whatsapp-web.js"
+import { Client } from "wajs"
 import os from "os"
 import { exec } from "child_process"
 import path from "path"
@@ -37,9 +37,7 @@ const startClient = async () => {
          downloadsPath: path.join(process.cwd(), 'temp')
       },
       qrMaxRetries: 2,
-      userAgent: os.platform() === 'win32' ? 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36' : 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safa',
-      deviceName: 'hisoka',
-      poweredBy: 'Dika Ardnt.'
+      userAgent: os.platform() === 'win32' ? 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36' : 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safa'
    })
 
    await hisoka.initialize()
@@ -62,13 +60,6 @@ const startClient = async () => {
 
    hisoka.on('ready', async () => {
       await hisoka.sendMessage(hisoka.info.wid._serialized, `${hisoka.info.pushname} Connected`)
-      await hisoka.playPage.evaluate(() => {
-         window.WPP.conn.setLimit('maxMediaSize', 73400320)
-         window.WPP.conn.setLimit('maxFileSize', 1073741824)
-         window.WPP.conn.setLimit('maxShare', 250)
-         window.WPP.conn.setLimit('statusVideoMaxDuration', 480)
-         window.WPP.conn.setLimit('unlimitedPin', true)
-      })
    })
 
    hisoka.on('message_create', async (message) => {
