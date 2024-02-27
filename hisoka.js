@@ -2,7 +2,7 @@ import "dotenv/config"
 import serialize, { Client } from "./lib/serialize.js"
 import { formatSize, parseFileSize, sendTelegram } from "./lib/function.js"
 
-import makeWASocket, { delay, useMultiFileAuthState, fetchLatestWaWebVersion, makeInMemoryStore, jidNormalizedUser, PHONENUMBER_MCC, DisconnectReason } from "@whiskeysockets/baileys"
+import makeWASocket, { delay, useMultiFileAuthState, fetchLatestWaWebVersion, makeInMemoryStore, jidNormalizedUser, PHONENUMBER_MCC, DisconnectReason, Browsers } from "@whiskeysockets/baileys"
 import pino from "pino"
 import { Boom } from "@hapi/boom"
 import fs from "fs"
@@ -29,7 +29,7 @@ const startSock = async () => {
       logger,
       printQRInTerminal: !usePairingCode,
       auth: state,
-      browser: ['Chrome (Linux)', '', ''],
+      browser: Browsers.ubuntu('Chrome'),
       markOnlineOnConnect: false,
       generateHighQualityLinkPreview: true,
       syncFullHistory: true,
