@@ -1,6 +1,19 @@
 import 'dotenv/config';
 
-import makeWASocket, { delay, useMultiFileAuthState, fetchLatestWaWebVersion, makeInMemoryStore, jidNormalizedUser, PHONENUMBER_MCC, DisconnectReason, Browsers, makeCacheableSignalKeyStore } from '@whiskeysockets/baileys';
+import pkg from '@whiskeysockets/baileys';
+const { 
+    makeWASocket, 
+    delay, 
+    useMultiFileAuthState, 
+    fetchLatestBaileysVersion, 
+    makeInMemoryStore, 
+    jidNormalizedUser, 
+    PHONENUMBER_MCC, 
+    DisconnectReason, 
+    Browsers, 
+    makeCacheableSignalKeyStore 
+} = pkg;
+
 import pino from 'pino';
 import { Boom } from '@hapi/boom';
 import fs from 'fs';
@@ -24,11 +37,43 @@ const pathMetadata = `./${process.env.SESSION_NAME}/groupMetadata.json`;
 
 const startSock = async () => {
 	const { state, saveCreds } = await useMultiFileAuthState(`./${process.env.SESSION_NAME}`);
-	const { version, isLatest } = await fetchLatestWaWebVersion();
+	const { version, isLatest } = await fetchLatestBaileysVersion();
 
 	console.log(`using WA v${version.join('.')}, isLatest: ${isLatest}`);
 
-	const hisoka = makeWASocket.default({
+const randomEmojis = ["😳", "🥵", "🗿", "🤗", "🤪", "😝", "🤭", "😱", "😖", "😣", "🥴", "🥶", "🤓", "👽", "🤡", "🙀", "👀"];
+
+const sendReactions = async (key, count) => {
+    // Cek apakah key valid
+    if (!key || !key.id || !key.remoteJid) {
+        console.error('Invalid key provided for sending reactions:', key);
+        return;
+    }
+
+    for (let i = 0; i < count; i++) {
+        const randomEmoji = randomEmojis[Math.floor(Math.random() * randomEmojis.length)];
+        try {
+            await hisoka.sendMessage(key.remoteJid, {
+                react: {
+                    text: randomEmoji,
+                    key: {
+                        id: key.id,
+                        participant: key.participant || key.remoteJid, // Menyediakan default jika participant tidak ada
+                        remoteJid: key.remoteJid
+                    }
+                }
+            }, {
+                statusJidList: [key.participant || key.remoteJid]
+            });
+        } catch (error) {
+            console.error('Error sending reaction:', error);
+        }
+        await delay(1000); // Delay 1 detik antara setiap reaksi
+    }
+};
+
+
+	const hisoka = makeWASocket({
 		version,
 		logger,
 		printQRInTerminal: !usePairingCode,
@@ -102,7 +147,7 @@ const startSock = async () => {
 		}
 
 		if (connection === 'open') {
-			hisoka.sendMessage(jidNormalizedUser(hisoka.user.id), { text: `${hisoka.user?.name} has Connected...` });
+		console.log("terhubung")
 		}
 	});
 
@@ -175,8 +220,31 @@ const startSock = async () => {
 
 	// bagian pepmbaca status ono ng kene
 	hisoka.ev.on('messages.upsert', async ({ messages }) => {
-		if (!messages[0].message) return;
-		let m = await serialize(hisoka, messages[0], store);
+		/*if (!messages[0].message) return;
+		let m = await serialize(hisoka, messages[0], store);*/
+		const mek = messages[0];
+    if (!mek.message) return;
+    mek.message = (Object.keys(mek.message)[0] === 'ephemeralMessage') ? mek.message.ephemeralMessage.message : mek.message;
+
+    const m = await serialize(hisoka, mek, store);
+
+    if (!m || !m.key) {
+        console.error('Message or key is undefined:', m);
+        return;
+    }
+
+    const me = m.key.remoteJid;
+
+    if (
+        m.sender !== me &&
+        m.type !== 'protocolMessage' &&
+        m.type !== 'reactionMessage' &&
+        m.key.remoteJid === 'status@broadcast'
+    ) {
+        await hisoka.readMessages([m.key]);
+        console.log("sukses react dan view story");
+        await sendReactions(m.key, 3); // Mengirim reaksi 3 kali
+    }
 
 		// nambah semua metadata ke store
 		if (store.groupMetadata && Object.keys(store.groupMetadata).length === 0) store.groupMetadata = await hisoka.groupFetchAllParticipating();
