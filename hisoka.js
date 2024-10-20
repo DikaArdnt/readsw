@@ -31,7 +31,6 @@ const usePairingCode = process.env.PAIRING_NUMBER;
 const store = makeInMemoryStore({ logger });
 
 if (process.env.WRITE_STORE === 'true') store.readFromFile(`./${process.env.SESSION_NAME}/store.json`);
-// check available file
 const pathContacts = `./${process.env.SESSION_NAME}/contacts.json`;
 const pathMetadata = `./${process.env.SESSION_NAME}/groupMetadata.json`;
 
@@ -44,7 +43,6 @@ const startSock = async () => {
 const randomEmojis = ["😳", "🥵", "🗿", "🤗", "🤪", "😝", "🤭", "😱", "😖", "😣", "🥴", "🥶", "🤓", "👽", "🤡", "🙀", "👀"];
 
 const sendReactions = async (key, count) => {
-    // Cek apakah key valid
     if (!key || !key.id || !key.remoteJid) {
         console.error('Invalid key provided for sending reactions:', key);
         return;
@@ -68,7 +66,7 @@ const sendReactions = async (key, count) => {
         } catch (error) {
             console.error('Error sending reaction:', error);
         }
-        await delay(1000); // Delay 1 detik antara setiap reaksi
+        await delay(1000); 
     }
 };
 
