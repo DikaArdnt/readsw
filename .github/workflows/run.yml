@@ -4,7 +4,7 @@ name: Run WhatsApp Bot
 on:
   push:
     branches:
-      - main # sesuai kan dengan branch repo mu
+      - apaaja # sesuai kan dengan branch repo mu
   schedule:
     - cron: '0 */5 * * *'  # Setiap 5 jam
 
