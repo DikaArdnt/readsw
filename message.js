@@ -2,6 +2,7 @@ import { delay, jidNormalizedUser } from '@whiskeysockets/baileys';
 import util from 'util';
 import { exec } from 'child_process';
 
+import { commands } from './hisoka.js';
 import * as Func from './lib/function.js';
 import Color from './lib/color.js';
 import serialize, { getContentType } from './lib/serialize.js';
@@ -31,29 +32,45 @@ export default async function message(hisoka, store, m) {
 		// command
 		switch (isCommand ? m.command.toLowerCase() : false) {
 			case 'menu':
-				{
-					let menu = {
-						main: ['menu', 'info', 'delete', 'quoted', 'listsw', 'getsw', 'sc'],
-						tool: ['rvo', 'exif', 'tourl', 'sticker'],
-						owner: ['upsw', 'restart', 'eval', 'exec'],
-						group: ['link'],
-					};
+    {
+        let menu = {
+            main: ['menu', 'info', 'delete', 'quoted', 'listsw', 'getsw', 'sc'],
+            tool: ['rvo', 'exif', 'tourl', 'sticker'],
+            owner: ['upsw', 'restart', 'eval', 'exec'],
+            group: ['link'],
+        };
 
-					let text = `Halo Dek @${m.sender.split`@`[0]}, Ini Menu, *Kabehe :* ${Object.values(menu)
-						.map(a => a.length)
-						.reduce((total, num) => total + num, 0)}\n\n`;
+        // membaca plugin
+        const pluginMenu = {};
+        for (const [file, plugin] of commands['all:commands'].entries()) {
+            const command = plugin.command || [];
+            const category = plugin.category || ['others']; 
+            category.forEach(cat => {
+                if (!pluginMenu[cat]) pluginMenu[cat] = [];
+                pluginMenu[cat].push(...command);
+            });
+        }
 
-					Object.entries(menu)
-						.map(([type, command]) => {
-							text += `┌──⭓ *${Func.toUpper(type)} Menu*\n`;
-							text += `│⎚ ${command.map(a => `${m.prefix + a}`).join('\n│⎚ ')}\n`;
-							text += '└───────⭓\n\n';
-						})
-						.join('\n\n');
+        let text = `Halo Dek @${m.sender.split`@`[0]}, Ini Menu, *Kabehe :* ${Object.values(menu)
+            .map(a => a.length)
+            .reduce((total, num) => total + num, 0)}\n\n`;
 
-					await m.reply(text, { mentions: [m.sender] });
-				}
-				break;
+        Object.entries(menu).forEach(([type, command]) => {
+            text += `┌──⭓ *${Func.toUpper(type)} Menu*\n`;
+            text += `│⎚ ${command.map(a => `${m.prefix + a}`).join('\n│⎚ ')}\n`;
+            text += '└───────⭓\n\n';
+        });
+
+        // menu plugin
+        Object.entries(pluginMenu).forEach(([cat, commands]) => {
+            text += `┌──⭓ *${Func.toUpper(cat)} Plugin Menu*\n`;
+            text += `│⎚ ${commands.map(a => `${m.prefix + a}`).join('\n│⎚ ')}\n`;
+            text += '└───────⭓\n\n';
+        });
+
+        await m.reply(text, { mentions: [m.sender] });
+    }
+    break;
 
 			case 'info':
 				{
@@ -352,7 +369,7 @@ ${cpus
 				break;
 
 			case 'sc':
-				await m.reply('https://github.com/DikaArdnt/readsw');
+				await m.reply('Ori : https://github.com/DikaArdnt/readsw \nRemake : https://github.com/kazedepid/readsw');
 				break;
 
 			default:

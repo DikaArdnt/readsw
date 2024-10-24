@@ -41,6 +41,8 @@ const commands = {
     'prefix:false': new Map()
 };
 
+export { commands }; 
+
 // Memuat plugin
 const loadPlugins = async () => {
     const pluginDir = path.resolve('./plugins');
