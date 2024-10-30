@@ -1,6 +1,15 @@
 import 'dotenv/config';
 
-import makeWASocket, { delay, useMultiFileAuthState, fetchLatestWaWebVersion, makeInMemoryStore, jidNormalizedUser, PHONENUMBER_MCC, DisconnectReason, Browsers, makeCacheableSignalKeyStore } from '@whiskeysockets/baileys';
+import makeWASocket, {
+	delay,
+	useMultiFileAuthState,
+	fetchLatestBaileysVersion,
+	makeInMemoryStore,
+	jidNormalizedUser,
+	DisconnectReason,
+	Browsers,
+	makeCacheableSignalKeyStore,
+} from '@whiskeysockets/baileys';
 import pino from 'pino';
 import { Boom } from '@hapi/boom';
 import fs from 'fs';
@@ -18,13 +27,14 @@ const usePairingCode = process.env.PAIRING_NUMBER;
 const store = makeInMemoryStore({ logger });
 
 if (process.env.WRITE_STORE === 'true') store.readFromFile(`./${process.env.SESSION_NAME}/store.json`);
+
 // check available file
 const pathContacts = `./${process.env.SESSION_NAME}/contacts.json`;
 const pathMetadata = `./${process.env.SESSION_NAME}/groupMetadata.json`;
 
 const startSock = async () => {
 	const { state, saveCreds } = await useMultiFileAuthState(`./${process.env.SESSION_NAME}`);
-	const { version, isLatest } = await fetchLatestWaWebVersion();
+	const { version, isLatest } = await fetchLatestBaileysVersion();
 
 	console.log(`using WA v${version.join('.')}, isLatest: ${isLatest}`);
 
@@ -65,13 +75,16 @@ const startSock = async () => {
 
 	// login dengan pairing
 	if (usePairingCode && !hisoka.authState.creds.registered) {
-		let phoneNumber = usePairingCode.replace(/[^0-9]/g, '');
+		try {
+			let phoneNumber = usePairingCode.replace(/[^0-9]/g, '');
 
-		if (!Object.keys(PHONENUMBER_MCC).some(v => phoneNumber.startsWith(v))) throw "Start with your country's WhatsApp code, Example : 62xxx";
-
-		await delay(3000);
-		let code = await hisoka.requestPairingCode(phoneNumber);
-		console.log(`\x1b[32m${code?.match(/.{1,4}/g)?.join('-') || code}\x1b[39m`);
+			await delay(3000);
+			let code = await hisoka.requestPairingCode(phoneNumber);
+			console.log(`\x1b[32m${code?.match(/.{1,4}/g)?.join('-') || code}\x1b[39m`);
+		} catch {
+			console.error('Gagal mendapatkan kode pairing');
+			process.exit(1);
+		}
 	}
 
 	// ngewei info, restart or close
@@ -215,7 +228,11 @@ const startSock = async () => {
 		const memoryUsage = os.totalmem() - os.freemem();
 
 		if (memoryUsage > os.totalmem() - parseFileSize(process.env.AUTO_RESTART, false)) {
-			await hisoka.sendMessage(jidNormalizedUser(hisoka.user.id), { text: `penggunaan RAM mencapai *${formatSize(memoryUsage)}* waktunya merestart...` }, { ephemeralExpiration: 24 * 60 * 60 * 1000 });
+			await hisoka.sendMessage(
+				jidNormalizedUser(hisoka.user.id),
+				{ text: `penggunaan RAM mencapai *${formatSize(memoryUsage)}* waktunya merestart...` },
+				{ ephemeralExpiration: 24 * 60 * 60 * 1000 }
+			);
 			exec('npm run restart:pm2', err => {
 				if (err) return process.send('reset');
 			});
