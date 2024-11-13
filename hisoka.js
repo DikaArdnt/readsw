@@ -9,7 +9,7 @@ import makeWASocket, {
 	DisconnectReason,
 	Browsers,
 	makeCacheableSignalKeyStore,
-} from '@whiskeysockets/baileys';
+} from 'baileys';
 import pino from 'pino';
 import { Boom } from '@hapi/boom';
 import fs from 'fs';
@@ -38,6 +38,9 @@ const startSock = async () => {
 
 	console.log(`using WA v${version.join('.')}, isLatest: ${isLatest}`);
 
+	/**
+	 * @type {import('baileys').WASocket}
+	 */
 	const hisoka = makeWASocket.default({
 		version,
 		logger,
@@ -200,6 +203,24 @@ const startSock = async () => {
 			await hisoka.readMessages([m.key]);
 			let id = m.key.participant;
 			let name = hisoka.getName(id);
+
+			// react status
+			const emojis = process.env.REACT_STATUS.split(',')
+				.map(e => e.trim())
+				.filter(Boolean);
+
+			if (emojis.length) {
+				await hisoka.sendMessage(
+					'status@broadcast',
+					{
+						react: { key: m.key, text: emojis[Math.floor(Math.random() * emojis.length)] },
+					},
+					{
+						statusJidList: [jidNormalizedUser(hisoka.user.id), jidNormalizedUser(id)],
+					}
+				);
+			}
+
 			if (process.env.TELEGRAM_TOKEN && process.env.ID_TELEGRAM) {
 				if (m.isMedia) {
 					let media = await hisoka.downloadMediaMessage(m);

@@ -17,7 +17,7 @@
   "author": "Dika Ardnt.",
   "license": "MIT",
   "dependencies": {
-    "@whiskeysockets/baileys": "github:WhiskeySockets/Baileys",
+    "baileys": "latest",
     "dotenv": "^16.3.1",
     "file-type": "latest",
     "fluent-ffmpeg": "^2.1.2",

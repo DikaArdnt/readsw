@@ -1,4 +1,4 @@
-import { delay, jidNormalizedUser } from '@whiskeysockets/baileys';
+import { delay, jidNormalizedUser } from 'baileys';
 import util from 'util';
 import { exec } from 'child_process';
 
@@ -8,9 +8,9 @@ import serialize, { getContentType } from './lib/serialize.js';
 
 /**
  * 
- * @param {import('@whiskeysockets/baileys').WASocket} hisoka 
+ * @param {import('baileys').WASocket} hisoka 
  * @param {any} store 
- * @param {import('@whiskeysockets/baileys').WAMessage} m 
+ * @param {import('baileys').WAMessage} m 
  */
 export default async function message(hisoka, store, m) {
 	try {
