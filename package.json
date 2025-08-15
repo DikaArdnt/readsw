@@ -17,10 +17,12 @@
   "author": "Dika Ardnt.",
   "license": "MIT",
   "dependencies": {
-    "baileys": "latest",
+    "@rodrigogs/baileys-store": "^1.0.1",
+    "baileys": "npm:techwiz-baileys",
     "dotenv": "^16.3.1",
     "file-type": "latest",
     "fluent-ffmpeg": "^2.1.2",
+    "libphonenumber-js": "^1.12.11",
     "node-webpmux": "^3.1.9",
     "qrcode-terminal": "^0.12.0"
   }

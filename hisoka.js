@@ -4,12 +4,12 @@ import makeWASocket, {
 	delay,
 	useMultiFileAuthState,
 	fetchLatestBaileysVersion,
-	makeInMemoryStore,
 	jidNormalizedUser,
 	DisconnectReason,
 	Browsers,
 	makeCacheableSignalKeyStore,
 } from 'baileys';
+import { makeInMemoryStore } from '@rodrigogs/baileys-store'
 import pino from 'pino';
 import { Boom } from '@hapi/boom';
 import fs from 'fs';
