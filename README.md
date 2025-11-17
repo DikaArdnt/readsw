@@ -1,12 +1,27 @@
-Bot hosting yang siap digunakan dan uptime 24jam penuh, hanya memerlukan nomor bot untuk scan/pairing bisa kunjungi ke [Hisoka Bot](https://www.hisoka.net)
+> [!IMPORTANT]
+> Sponsored with pride by [Hisoka.net](https://hisoka.net), your trusted partner for seamless hosting solutions.
 
-Tinggal `npm install` terus `npm start`
+## Requirements
 
-## Info
+Ensure you have the following:
 
-Tidak disarankan untuk digunakan secara publik, karena seiring berjalannya waktu penggunaan RAM semakin besar.
+-  **Node.js** version **20** or higher installed.
 
-Untuk mengurangi penggunaan RAM bisa dimatikan write store di `.env`
+## Installation
 
-## Hosting
-Jika kamu ingin menjalankan bot dengan Uptime 24/7 tanpa perlu mengkhawatirkan server bisa kunjungi halaman berikut [Hisoka](https://hisoka.net)
+Follow these simple steps to get started:
+
+1. Install dependencies by running:
+   ```bash
+   npm install
+   ```
+2. Start the application with:
+   ```bash
+   npm start
+   ```
+
+> [!IMPORTANT]
+>
+> If you need a WhatsApp Bot hosting, consider exploring [Hisoka.net's WhatsApp Bot hosting](https://hisoka.net) for reliable and efficient solutions.
+>
+> to help you grow your online presence. Check out our [URL shortener](https://kua.lat) for creating concise, shareable links, and our [bio page builder](https://kua.lat/bio-profiles) for crafting a professional online profile effortlessly.

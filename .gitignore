@@ -1,3 +1,5 @@
-session
 node_modules
+sessions
 package-lock.json
+.env
+test*
